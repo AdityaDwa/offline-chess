@@ -1,14 +1,59 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+#chess-board-container {
+  background-color: rgb(29, 35, 40);
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.chess-board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 44rem;
+  height: 44rem;
+}
+
+.chess-box {
+  width: 5.5rem;
+  height: 5.5rem;
+  background-color: rgb(217, 245, 217);
+}
+
+.dark-chess-box {
+  background-color: rgb(49, 75, 47);
+}
+
+.chess-piece-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.chess-piece-btn img {
+  width: 5.5rem;
+  height: 5.5rem;
+}
+
+.move-tile {
+  width: 5.5rem;
+  height: 5.5rem;
+  background-color: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.move-tile-indicator {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: rgb(14, 36, 14);
 }
