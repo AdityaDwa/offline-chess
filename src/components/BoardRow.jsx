@@ -1,67 +1,66 @@
-import Piece from "./Piece.jsx";
-
-import { PIECES_INFO } from "../pieces_info.js";
-import { computePiecePosition } from "../piece_utility.js";
-
-export default function BoardRow({
-  rowIndex,
-  updatePieceMoveTiles,
-  moveTiles,
-}) {
-  function handleMoveTileClick(id, row, col) {
-    const movingPiece = PIECES_INFO.find((piece) => piece.id === id);
-    movingPiece.moveList.push({ row: row, col: col });
-    updatePieceMoveTiles({ id: null, tiles: [] });
-  }
-
+export default function BoardRow({ rowIndex, isBoardFlipped }) {
+  const columnsLetters = ["a", "b", "c", "d", "e", "f", "g", "h"];
   let columnIndex = -1;
   return (
     <>
       {Array.from({ length: 8 }).map(() => {
         let cssClasses = "chess-box";
+        const checkingCondition = !isBoardFlipped ? 0 : 7;
+        const colorCondition = (rowIndex + columnIndex) % 2 === 0;
         columnIndex++;
 
-        if ((rowIndex + columnIndex) % 2 != 0) {
+        if (colorCondition) {
           cssClasses += " dark-chess-box";
         }
 
-        const pieceInfo = PIECES_INFO.filter((piece) => {
-          const computedPiecePosition = computePiecePosition(piece);
-          return (
-            computedPiecePosition.row == rowIndex &&
-            computedPiecePosition.col == columnIndex
-          );
-        });
+        const rowLetter = (
+          <span
+            className="row-letter"
+            style={{
+              color: colorCondition ? "rgb(217, 230, 245)" : "#18354f",
+            }}
+          >
+            {columnIndex == checkingCondition ? 8 - rowIndex : ""}
+          </span>
+        );
+
+        const columnLetter = (
+          <span
+            className="column-letter"
+            style={{
+              color: colorCondition ? "rgb(217, 230, 245)" : "#18354f",
+            }}
+          >
+            {rowIndex == 7 - checkingCondition
+              ? columnsLetters[columnIndex]
+              : ""}
+          </span>
+        );
 
         return (
-          <span className={cssClasses} key={columnIndex}>
-            {pieceInfo.length ? (
-              <Piece
-                pieceInfo={pieceInfo}
-                updatePieceMoveTiles={updatePieceMoveTiles}
-              />
-            ) : (
-              ""
-            )}
-
-            {moveTiles.tiles.map((move) => {
-              if (move.row == rowIndex && move.col == columnIndex) {
-                return (
-                  <div
-                    className="move-tile"
-                    key={move.row + move.col}
-                    onClick={() =>
-                      handleMoveTileClick(moveTiles.id, move.row, move.col)
-                    }
-                  >
-                    <div className="move-tile-indicator"></div>
-                  </div>
-                );
-              }
-            })}
+          <span
+            key={columnIndex}
+            className={cssClasses}
+            style={{
+              rotate: isBoardFlipped ? "180deg" : "0deg",
+            }}
+          >
+            {rowLetter}
+            {columnLetter}
           </span>
         );
       })}
     </>
   );
 }
+
+//pawn promotion, notation, movehistory
+//en passant, notation, movehistory
+//endgame resign
+//castling not done
+//checkmate and stalemate not done(pinned pieces)
+//move traverse tile array empty
+
+//clashing move notation fix
+//same name clashing in list too
+//refactor localstorage variable names code optimization

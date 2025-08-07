@@ -1,31 +1,73 @@
-import { areArraysEqual, pieceIdentifier } from "../moves_validation.js";
-import { computePiecePosition } from "../piece_utility.js";
+import { useState, useEffect } from "react";
 
-export default function Piece({ pieceInfo, updatePieceMoveTiles }) {
+import { pieceIdentifier } from "../MovesValidations.js";
+import { computePiecePosition, areArraysEqual } from "../PieceUtility.js";
+
+export default function Piece({
+  pieceInfo,
+  isWhiteTurn,
+  isBoardFlipped,
+  isMovementAllowed,
+  style,
+  moveTiles,
+  genMovementTiles,
+}) {
+  const [isPieceClicked, setIsPieceClicked] = useState(false);
+
+  useEffect(() => {
+    if (moveTiles.id !== pieceInfo.id) {
+      setIsPieceClicked(false);
+    }
+  }, [moveTiles]);
+
+  function handleDragStart(event) {
+    event.dataTransfer.setData("text/plain", "chess-piece");
+    handlePieceClick();
+  }
+
   function handlePieceClick() {
-    const computedPiecePosition = computePiecePosition(pieceInfo[0]);
+    setIsPieceClicked(!isPieceClicked);
+    const computedPiecePosition = computePiecePosition(pieceInfo);
 
     const returnArray = pieceIdentifier(
-      pieceInfo[0].title,
+      pieceInfo,
       computedPiecePosition.row,
       computedPiecePosition.col
     );
 
-    updatePieceMoveTiles((prevMoveInfo) => {
+    genMovementTiles((prevMoveInfo) => {
       if (
         !prevMoveInfo.tiles.length ||
         !areArraysEqual(returnArray, prevMoveInfo.tiles)
       ) {
-        return { id: pieceInfo[0].id, tiles: returnArray };
+        return { id: pieceInfo.id, tiles: returnArray };
       } else {
         return { id: null, tiles: [] };
       }
     });
   }
 
+  const isDisabled =
+    isWhiteTurn !== pieceInfo.title.includes("white") || !isMovementAllowed;
+
+  const cssClasses = isPieceClicked
+    ? "chess-piece-btn chess-piece-btn-active"
+    : "chess-piece-btn";
+
   return (
-    <button className="chess-piece-btn" onClick={handlePieceClick}>
-      <img src={pieceInfo[0].src} alt={pieceInfo[0].title} />
+    <button
+      draggable={!isDisabled}
+      className={cssClasses}
+      onClick={handlePieceClick}
+      onDragStart={handleDragStart}
+      disabled={isDisabled}
+      style={style}
+    >
+      <img
+        src={pieceInfo.src}
+        alt={pieceInfo.title}
+        style={{ rotate: isBoardFlipped ? "180deg" : "0deg" }}
+      />
     </button>
   );
 }
