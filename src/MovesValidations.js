@@ -1,32 +1,25 @@
 import { DIRECTION_VECTORS } from "./PiecesInfo.js";
 import { getPieceAtCoords } from "./PieceUtility.js";
 
-let pieceColor;
-
 export function pieceIdentifier(pieceToIdentify, row, col) {
   const pieceTitle = pieceToIdentify.title;
-
-  if (pieceTitle.includes("white")) {
-    pieceColor = "white";
-  } else {
-    pieceColor = "black";
-  }
+  const pieceColor = pieceTitle.includes("white") ? "white" : "black";
 
   if (pieceTitle.includes("rook")) {
-    return rookMoveGen(row, col);
+    return rookMoveGen(row, col, pieceColor);
   } else if (pieceTitle.includes("knight")) {
-    return knightMoveGen(row, col);
+    return knightMoveGen(row, col, pieceColor);
   } else if (pieceTitle.includes("bishop")) {
-    return bishopMoveGen(row, col);
+    return bishopMoveGen(row, col, pieceColor);
   } else if (pieceTitle.includes("queen")) {
-    const rookMoves = rookMoveGen(row, col);
-    const bishopMoves = bishopMoveGen(row, col);
+    const rookMoves = rookMoveGen(row, col, pieceColor);
+    const bishopMoves = bishopMoveGen(row, col, pieceColor);
     const legalQueenMoves = [...rookMoves, ...bishopMoves];
     return legalQueenMoves;
   } else if (pieceTitle.includes("king")) {
-    return kingMoveGen(pieceToIdentify, row, col);
+    return kingMoveGen(pieceToIdentify, row, col, pieceColor);
   } else {
-    return pawnMoveGen(pieceToIdentify, row, col);
+    return pawnMoveGen(pieceToIdentify, row, col, pieceColor);
   }
 }
 
@@ -35,7 +28,8 @@ function genMoveInOneDirection(
   col,
   rowIncrement,
   colIncrement,
-  legalMoveArray
+  legalMoveArray,
+  pieceColor
 ) {
   let i = 1;
   while (
@@ -69,7 +63,14 @@ function genMoveInOneDirection(
   }
 }
 
-function genOneMove(row, col, rowTraverse, colTraverse, legalMoveArray) {
+function genOneMove(
+  row,
+  col,
+  rowTraverse,
+  colTraverse,
+  legalMoveArray,
+  pieceColor
+) {
   if (
     row + rowTraverse < 8 &&
     row + rowTraverse >= 0 &&
@@ -96,7 +97,8 @@ function genCastlingMove(
   col,
   kingPiece,
   legalMoveArray,
-  castlingDirection
+  castlingDirection,
+  pieceColor
 ) {
   const isKingMoved = kingPiece.moveList.length !== 0;
   const castlingPathway = [];
@@ -157,41 +159,55 @@ function genCastlingMove(
   }
 }
 
-function rookMoveGen(row, col) {
+function rookMoveGen(row, col, pieceColor) {
   const legalRookMoves = [];
 
   DIRECTION_VECTORS.rook.forEach((vector) =>
-    genMoveInOneDirection(row, col, vector.row, vector.col, legalRookMoves)
+    genMoveInOneDirection(
+      row,
+      col,
+      vector.row,
+      vector.col,
+      legalRookMoves,
+      pieceColor
+    )
   );
 
   return legalRookMoves;
 }
 
-function knightMoveGen(row, col) {
+function knightMoveGen(row, col, pieceColor) {
   const legalKnightMoves = [];
 
   DIRECTION_VECTORS.knight.forEach((vector) =>
-    genOneMove(row, col, vector.row, vector.col, legalKnightMoves)
+    genOneMove(row, col, vector.row, vector.col, legalKnightMoves, pieceColor)
   );
 
   return legalKnightMoves;
 }
 
-function bishopMoveGen(row, col) {
+function bishopMoveGen(row, col, pieceColor) {
   const legalBishopMoves = [];
 
   DIRECTION_VECTORS.bishop.forEach((vector) =>
-    genMoveInOneDirection(row, col, vector.row, vector.col, legalBishopMoves)
+    genMoveInOneDirection(
+      row,
+      col,
+      vector.row,
+      vector.col,
+      legalBishopMoves,
+      pieceColor
+    )
   );
 
   return legalBishopMoves;
 }
 
-function kingMoveGen(kingPiece, row, col) {
+function kingMoveGen(kingPiece, row, col, pieceColor) {
   const legalKingMoves = [];
 
   DIRECTION_VECTORS.king.forEach((vector) =>
-    genOneMove(row, col, vector.row, vector.col, legalKingMoves)
+    genOneMove(row, col, vector.row, vector.col, legalKingMoves, pieceColor)
   );
 
   kingPiece.castling = {
@@ -203,15 +219,29 @@ function kingMoveGen(kingPiece, row, col) {
   };
 
   const kingsideCastle = 1;
-  genCastlingMove(row, col, kingPiece, legalKingMoves, kingsideCastle);
+  genCastlingMove(
+    row,
+    col,
+    kingPiece,
+    legalKingMoves,
+    kingsideCastle,
+    pieceColor
+  );
 
   const queensideCastle = -1;
-  genCastlingMove(row, col, kingPiece, legalKingMoves, queensideCastle);
+  genCastlingMove(
+    row,
+    col,
+    kingPiece,
+    legalKingMoves,
+    queensideCastle,
+    pieceColor
+  );
 
   return legalKingMoves;
 }
 
-function pawnMoveGen(pawnPiece, row, col) {
+function pawnMoveGen(pawnPiece, row, col, pieceColor) {
   const validPawnMoves = [];
   const isPawnMoved = pawnPiece.moveList.length !== 0;
   const direction = pieceColor === "white" ? 1 : -1;
