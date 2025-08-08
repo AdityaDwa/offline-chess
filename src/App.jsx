@@ -1,9 +1,9 @@
-import Board from "./components/Board.jsx";
+import GameWindow from "./components/GameWindow.jsx";
 
 function App() {
   return (
     <>
-      <Board />
+      <GameWindow />
     </>
   );
 }
