@@ -1,14 +1,18 @@
+import { useContext } from "react";
+
 import FirstMoveIcon from "./icons/FirstMoveIcon.jsx";
 import PrevMoveIcon from "./icons/PrevMoveIcon.jsx";
 import NextMoveIcon from "./icons/NextMoveIcon.jsx";
 import LastMoveIcon from "./icons/LastMoveIcon.jsx";
 
-import { MOVE_HISTORY } from "../MatchConstants.js";
+import { MatchContext } from "../store/MatchContext.jsx";
 
-export default function MoveHistoryTable({
-  traverseIndex,
-  handleMoveHistoryTraversal,
-}) {
+import { MOVE_HISTORY } from "../constants/MatchConstants.js";
+
+export default function MoveHistoryTable() {
+  const { traverseIndex, handleMoveHistoryTraversal } =
+    useContext(MatchContext);
+
   return (
     <div className="move-history-section">
       <p>Chess Notation</p>
@@ -28,7 +32,7 @@ export default function MoveHistoryTable({
                     }`}
                     onClick={() => handleMoveHistoryTraversal(eachMove.moveId)}
                   >
-                    {eachMove.moveId}
+                    {eachMove.moveTitle}
                   </button>
 
                   {MOVE_HISTORY[index + 1] && (
@@ -42,7 +46,7 @@ export default function MoveHistoryTable({
                         )
                       }
                     >
-                      {MOVE_HISTORY[index + 1].moveId}
+                      {MOVE_HISTORY[index + 1].moveTitle}
                     </button>
                   )}
                 </div>

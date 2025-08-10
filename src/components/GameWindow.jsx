@@ -1,214 +1,214 @@
 import { useState, useEffect } from "react";
 
+import GameEndModal from "./GameEndModal.jsx";
+import PawnPromotionModal from "./PawnPromotionModal.jsx";
 import Board from "./Board.jsx";
 import MoveHistoryTable from "./MoveHistoryTable.jsx";
 
-import { PIECES_INFO } from "../PiecesInfo.js";
+import { MatchContext } from "../store/MatchContext.jsx";
+
+import { PIECES_INFO } from "../constants/PiecesInfo.js";
+import { MOVE_HISTORY, COLUMNS } from "../constants/MatchConstants.js";
+import {
+  castleKing,
+  genMoveNotation,
+  getMoveIndex,
+  clearMoveHistory,
+  traverseMoveHistory,
+} from "../utils/MatchUtility.js";
 import {
   computePiecePosition,
   getPieceAtCoords,
   probeForCheck,
   probeForStalemate,
   probeForCheckmate,
-} from "../PieceUtility.js";
-
-import { MOVE_HISTORY, COLUMNS } from "../MatchConstants.js";
+} from "../utils/PieceUtility.js";
+import { pieceIdentifier } from "../utils/MovesValidation.js";
 
 export default function GameWindow() {
-  const [moveTiles, setMoveTiles] = useState({
-    id: null,
-    tiles: [],
+  const [moveTiles, setMoveTiles] = useState({ id: null, tiles: [] });
+
+  const [gameEndState, setGameEndState] = useState({
+    hasEnded: false,
+    reasonCode: null,
+  });
+
+  const [pawnPromotionInfo, setPawnPromotionInfo] = useState({
+    isPromoting: false,
+    pawnPiece: null,
   });
 
   const [isWhiteTurn, setIsWhiteTurn] = useState(true);
   const [isBoardFlipped, setIsBoardFlipped] = useState(false);
   const [traverseIndex, setTravserseIndex] = useState(-1);
 
-  const [dummyState, setDummyState] = useState("");
-
   useEffect(() => {
     const didCheckOccur = probeForCheck(isWhiteTurn, PIECES_INFO);
 
     if (didCheckOccur.length !== 0) {
-      probeForCheckmate(isWhiteTurn, didCheckOccur);
+      const didCheckmateOccur = probeForCheckmate(isWhiteTurn, didCheckOccur);
+
+      if (didCheckmateOccur) {
+        setTimeout(() => {
+          setGameEndState({ hasEnded: true, reasonCode: 0 });
+        }, 100);
+      }
     } else {
-      probeForStalemate(isWhiteTurn);
+      const didStalemateOccur = probeForStalemate(isWhiteTurn);
+
+      if (didStalemateOccur) {
+        setTimeout(() => {
+          setGameEndState({ hasEnded: true, reasonCode: 1 });
+        }, 100);
+      }
     }
-  }, [isWhiteTurn]);
+  }, [isBoardFlipped]);
 
   function genMovementTiles(pieceMoveInfo) {
     setMoveTiles(pieceMoveInfo);
   }
 
-  function handlePieceMovement(id, row, col) {
-    const capturedPiece = getPieceAtCoords(row, col);
-    let moveNotation = "";
-    let specialMoveInfo = null;
-    let capturedPieceId = null;
-
-    if (capturedPiece) {
-      capturedPiece.isCaptured = true;
-      capturedPieceId = capturedPiece.id;
-    }
-
-    const movingPiece = PIECES_INFO.find((piece) => piece.id === id);
-    const currentPosition = computePiecePosition(movingPiece);
-
-    if (
-      movingPiece.title.includes("king") &&
-      movingPiece.castling.isCastlingPossible
-    ) {
-      const kingTraverse = col - movingPiece.position.col;
-      const keyTitle =
-        kingTraverse === 2 ? "kingsideCastling" : "queensideCastling";
-
-      if (Math.abs(kingTraverse) === 2) {
-        const castlingRook = getPieceAtCoords(
-          movingPiece.castling.rookCoords[keyTitle].initialCoords.row,
-          movingPiece.castling.rookCoords[keyTitle].initialCoords.col
-        );
-
-        castlingRook.moveList.push(
-          movingPiece.castling.rookCoords[keyTitle].finalCoords
-        );
-
-        moveNotation = keyTitle === "kingsideCastling" ? "O-O" : "O-O-O";
-        specialMoveInfo = {
-          specialPieceId: castlingRook.id,
-          specialMove: movingPiece.castling.rookCoords[keyTitle].finalCoords,
-        };
-      }
-
-      movingPiece.castling = {
-        isCastlingPossible: false,
-        rookCoords: {
-          kingsideCastling: { initialCoords: {}, finalCoords: {} },
-          queensideCastling: { initialCoords: {}, finalCoords: {} },
-        },
-      };
-    }
-
-    movingPiece.moveList.push({ row: row, col: col });
-    const checkMoveArrayForCurrentUser = probeForCheck(isWhiteTurn);
-    if (checkMoveArrayForCurrentUser.length !== 0) {
-      movingPiece.moveList.pop();
-      if (capturedPiece) {
-        capturedPiece.isCaptured = false;
-      }
-      // console.log(checkMoveArrayForCurrentUser);
-      return;
-    }
-
-    const checkMoveArrayForOpponent = probeForCheck(!isWhiteTurn);
-    const opponentIsMate = probeForCheckmate(!isWhiteTurn);
-
-    let checkNotation = checkMoveArrayForOpponent.length !== 0 ? "+" : "";
-    checkNotation = opponentIsMate ? "#" : checkNotation;
-
-    if (!moveNotation) {
-      let pieceNotation = "";
-      if (movingPiece.title.includes("rook")) {
-        pieceNotation = "R";
-      } else if (movingPiece.title.includes("knight")) {
-        pieceNotation = "N";
-      } else if (movingPiece.title.includes("bishop")) {
-        pieceNotation = "B";
-      } else if (movingPiece.title.includes("king")) {
-        pieceNotation = "K";
-      } else if (movingPiece.title.includes("queen")) {
-        pieceNotation = "Q";
-      }
-
-      let captureSymbol = capturedPieceId ? "x" : "";
-      let pawnCaptureRow =
-        capturedPieceId && movingPiece.title.includes("pawn")
-          ? COLUMNS[currentPosition.col]
-          : "";
-      moveNotation = `${pieceNotation}${pawnCaptureRow}${captureSymbol}${
-        COLUMNS[col]
-      }${row + 1}${checkNotation}`;
-    }
-
-    MOVE_HISTORY.push({
-      moveId: moveNotation,
-      pieceId: id,
-      movedPosition: { row: row, col: col },
-      capturedPieceId: capturedPieceId,
-      specialMoveInfo: specialMoveInfo,
-    });
-
+  function passPlay() {
     genMovementTiles({ id: null, tiles: [] });
     setIsWhiteTurn((prevTurn) => !prevTurn);
     setTravserseIndex((prevIndex) => prevIndex + 1);
-
     setTimeout(() => {
       setIsBoardFlipped((prevOrientation) => !prevOrientation);
     }, 500);
   }
 
-  function handleMoveHistoryTraversal(moveId = "", traverseVector = "") {
-    let moveIndex;
+  function handlePieceMovement(id, row, col) {
+    const moveInfoObj = {
+      moveNotation: "",
+      capturedPieceId: null,
+      specialMoveInfo: null,
+    };
 
-    if (traverseVector === "") {
-      moveIndex = MOVE_HISTORY.findIndex(
-        (eachMove) => eachMove.moveId === moveId
+    const capturedPiece = getPieceAtCoords(row, col);
+    if (capturedPiece) {
+      capturedPiece.isCaptured = true;
+      moveInfoObj.capturedPieceId = capturedPiece.id;
+    }
+
+    const movingPiece = PIECES_INFO.find((piece) => piece.id === id);
+    const currentPosition = computePiecePosition(movingPiece);
+    let castledRook = null;
+
+    if (
+      movingPiece.title.includes("king") &&
+      movingPiece.castling.isCastlingPossible
+    ) {
+      castledRook = castleKing(
+        movingPiece,
+        currentPosition,
+        col,
+        moveInfoObj,
+        isWhiteTurn
       );
-    } else {
-      moveIndex = traverseVector - 1;
-      if (traverseVector === 1 || traverseVector === -1) {
-        moveIndex = traverseIndex + traverseVector;
+
+      if (castledRook === -1) {
+        return;
       }
     }
 
-    setTravserseIndex(moveIndex);
+    let sameAnnotation = false;
+    let moveClashfix = "";
 
-    for (let i = MOVE_HISTORY.length - 1; i >= 0; i--) {
-      const movedPiece = PIECES_INFO.find(
-        (piece) => piece.id === MOVE_HISTORY[i].pieceId
+    if (
+      movingPiece.title.includes("rook") ||
+      movingPiece.title.includes("knight") ||
+      movingPiece.title.includes("bishop") ||
+      movingPiece.title.includes("queen")
+    ) {
+      sameAnnotation = true;
+    }
+
+    if (sameAnnotation) {
+      const samePiece = PIECES_INFO.find(
+        (piece) =>
+          piece.title === movingPiece.title &&
+          piece.id !== id &&
+          !piece.isCaptured
       );
-      movedPiece.moveList.pop();
 
-      if (MOVE_HISTORY[i].capturedPieceId) {
-        const capturedPiece = PIECES_INFO.find(
-          (piece) => piece.id === MOVE_HISTORY[i].capturedPieceId
+      if (samePiece) {
+        const samePieceCoords = computePiecePosition(samePiece);
+        const samePossibleMoves = pieceIdentifier(
+          samePiece,
+          samePieceCoords.row,
+          samePieceCoords.col
         );
+
+        const isSameMovePossible = samePossibleMoves.some(
+          (eachMove) => eachMove.row === row && eachMove.col === col
+        );
+
+        if (isSameMovePossible) {
+          if (currentPosition.col === samePieceCoords.col) {
+            moveClashfix = currentPosition.row + 1;
+          } else {
+            moveClashfix = COLUMNS[currentPosition.col];
+          }
+        }
+      }
+    }
+
+    movingPiece.moveList.push({ row: row, col: col });
+    const checkMovesFromOpponent = probeForCheck(isWhiteTurn);
+
+    if (checkMovesFromOpponent.length !== 0) {
+      movingPiece.moveList.pop();
+      if (castledRook) {
+        castledRook.moveList.pop();
+      }
+
+      if (capturedPiece) {
         capturedPiece.isCaptured = false;
       }
-
-      if (MOVE_HISTORY[i].specialMoveInfo) {
-        const specialPiece = PIECES_INFO.find(
-          (piece) => piece.id === MOVE_HISTORY[i].specialMoveInfo.specialPieceId
-        );
-        specialPiece.moveList.pop();
-      }
+      // genMovementTiles({ id: null, tiles: [] });
+      return;
     }
 
-    for (let i = 0; i <= moveIndex; i++) {
-      const movedPiece = PIECES_INFO.find(
-        (piece) => piece.id === MOVE_HISTORY[i].pieceId
-      );
-      movedPiece.moveList.push(MOVE_HISTORY[i].movedPosition);
+    const isPawnPromotionMove =
+      movingPiece.title.includes("pawn") && 7 * +isWhiteTurn - row === 0;
 
-      if (MOVE_HISTORY[i].capturedPieceId) {
-        const capturedPiece = PIECES_INFO.find(
-          (piece) => piece.id === MOVE_HISTORY[i].capturedPieceId
-        );
-        capturedPiece.isCaptured = true;
-      }
+    const pawnPromotionMoveObj = genMoveNotation(
+      id,
+      row,
+      col,
+      isWhiteTurn,
+      movingPiece,
+      moveInfoObj,
+      currentPosition,
+      traverseIndex,
+      isPawnPromotionMove,
+      moveClashfix
+    );
 
-      if (MOVE_HISTORY[i].specialMoveInfo) {
-        const specialPiece = PIECES_INFO.find(
-          (piece) => piece.id === MOVE_HISTORY[i].specialMoveInfo.specialPieceId
-        );
-        specialPiece.moveList.push(MOVE_HISTORY[i].specialMoveInfo.specialMove);
-      }
-
-      setMoveTiles({
-        id: null,
-        tiles: [],
+    if (isPawnPromotionMove) {
+      setPawnPromotionInfo({
+        isPromoting: true,
+        pawnPiece: movingPiece,
+        moveObj: pawnPromotionMoveObj,
       });
-      setDummyState(Math.random());
+      genMovementTiles({ id: null, tiles: [] });
+      return;
     }
+
+    passPlay();
+  }
+
+  function handleMoveHistoryTraversal(moveId = "", traverseVector = "") {
+    const moveIndex = getMoveIndex(moveId, traverseVector, traverseIndex);
+
+    clearMoveHistory();
+    traverseMoveHistory(moveIndex);
+
+    setTravserseIndex(moveIndex);
+    setMoveTiles({
+      id: null,
+      tiles: [],
+    });
   }
 
   function handleDrop(event, id, row, col) {
@@ -220,22 +220,90 @@ export default function GameWindow() {
     }
   }
 
-  return (
-    <section id="chess-board-container">
-      <Board
-        isWhiteTurn={isWhiteTurn}
-        isBoardFlipped={isBoardFlipped}
-        traverseIndex={traverseIndex}
-        moveTiles={moveTiles}
-        genMovementTiles={genMovementTiles}
-        handlePieceMovement={handlePieceMovement}
-        handleDrop={handleDrop}
-      />
+  function handleNewGameRequest() {
+    clearMoveHistory();
+    genMovementTiles({ id: null, tiles: [] });
+    setIsWhiteTurn(true);
+    setIsBoardFlipped(false);
+    setTravserseIndex(-1);
+    setGameEndState({ hasEnded: false, reasonCode: null });
 
-      <MoveHistoryTable
-        traverseIndex={traverseIndex}
-        handleMoveHistoryTraversal={handleMoveHistoryTraversal}
+    MOVE_HISTORY.length = 0;
+  }
+
+  function handleEndGameRequest(reasonCode) {
+    setGameEndState({ hasEnded: true, reasonCode: reasonCode });
+  }
+
+  function handleModalClose() {
+    setGameEndState((prevState) => ({ ...prevState, hasEnded: false }));
+  }
+
+  function handlePawnPromotion(promotedPiece, promotedPieceTitle) {
+    pawnPromotionInfo.pawnPiece.title = promotedPieceTitle;
+    pawnPromotionInfo.pawnPiece.src = promotedPiece;
+
+    let promotionNotation = promotedPieceTitle[6].toUpperCase();
+    promotionNotation = promotionNotation === "K" ? "N" : promotionNotation;
+
+    const checkMovesFromCurrentUser = probeForCheck(!isWhiteTurn);
+    const opponentIsMate = probeForCheckmate(
+      !isWhiteTurn,
+      checkMovesFromCurrentUser
+    );
+
+    const indexOfEqualSign = pawnPromotionInfo.moveObj.moveTitle.indexOf("=");
+    let checkNotation = checkMovesFromCurrentUser.length !== 0 ? "+" : "";
+    checkNotation = opponentIsMate ? "#" : checkNotation;
+
+    pawnPromotionInfo.moveObj.moveTitle =
+      pawnPromotionInfo.moveObj.moveTitle.slice(0, indexOfEqualSign + 1) +
+      promotionNotation +
+      checkNotation;
+
+    pawnPromotionInfo.moveObj.pawnPromoMoveInfo = {
+      title: promotedPieceTitle,
+      src: promotedPiece,
+    };
+
+    MOVE_HISTORY.push(pawnPromotionInfo.moveObj);
+    setPawnPromotionInfo({ isPromoting: false, pawnPiece: null });
+    passPlay();
+  }
+
+  const ctxValue = {
+    isWhiteTurn: isWhiteTurn,
+    isBoardFlipped: isBoardFlipped,
+    traverseIndex: traverseIndex,
+    moveTiles: moveTiles,
+    genMovementTiles: genMovementTiles,
+    handlePieceMovement: handlePieceMovement,
+    handleDrop: handleDrop,
+    handleMoveHistoryTraversal: handleMoveHistoryTraversal,
+  };
+
+  return (
+    <MatchContext.Provider value={ctxValue}>
+      <GameEndModal
+        gameEndState={gameEndState}
+        isWhiteTurn={isWhiteTurn}
+        handleNewGameRequest={handleNewGameRequest}
+        handleModalClose={handleModalClose}
       />
-    </section>
+      {pawnPromotionInfo.isPromoting && (
+        <PawnPromotionModal
+          pawnColor={pawnPromotionInfo.pawnPiece.title.includes("white")}
+          handlePawnPromotion={handlePawnPromotion}
+        />
+      )}
+      <section id="chess-board-container">
+        <Board />
+        <MoveHistoryTable />
+        <div className="controls">
+          <button onClick={() => handleEndGameRequest(2)}>resign</button>
+          <button onClick={() => handleEndGameRequest(3)}>draw</button>
+        </div>
+      </section>
+    </MatchContext.Provider>
   );
 }
