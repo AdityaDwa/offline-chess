@@ -1,17 +1,14 @@
-import { useState, useEffect } from "react";
+import { useContext, useState, useEffect } from "react";
 
-import { pieceIdentifier } from "../MovesValidations.js";
-import { computePiecePosition, areArraysEqual } from "../PieceUtility.js";
+import { MatchContext } from "../store/MatchContext.jsx";
 
-export default function Piece({
-  pieceInfo,
-  isWhiteTurn,
-  isBoardFlipped,
-  isMovementAllowed,
-  style,
-  moveTiles,
-  genMovementTiles,
-}) {
+import { pieceIdentifier } from "../utils/MovesValidation.js";
+import { computePiecePosition, areArraysEqual } from "../utils/PieceUtility.js";
+
+export default function Piece({ pieceInfo, isMovementAllowed, style }) {
+  const { isWhiteTurn, isBoardFlipped, moveTiles, genMovementTiles } =
+    useContext(MatchContext);
+
   const [isPieceClicked, setIsPieceClicked] = useState(false);
 
   useEffect(() => {

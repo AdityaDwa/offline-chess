@@ -1,19 +1,18 @@
+import { useContext } from "react";
+
 import BoardRow from "./BoardRow.jsx";
 import Piece from "./Piece.jsx";
+import MoveTile from "./MoveTile.jsx";
 
-import { PIECES_INFO } from "../PiecesInfo.js";
-import { MOVE_HISTORY } from "../MatchConstants.js";
-import { computePiecePosition } from "../PieceUtility.js";
+import { MatchContext } from "../store/MatchContext.jsx";
 
-export default function Board({
-  isWhiteTurn,
-  isBoardFlipped,
-  traverseIndex,
-  moveTiles,
-  genMovementTiles,
-  handlePieceMovement,
-  handleDrop,
-}) {
+import { PIECES_INFO } from "../constants/PiecesInfo.js";
+import { MOVE_HISTORY } from "../constants/MatchConstants.js";
+import { computePiecePosition } from "../utils/PieceUtility.js";
+
+export default function Board() {
+  const { isBoardFlipped, traverseIndex, moveTiles } = useContext(MatchContext);
+
   let rowIndex = -1;
 
   return (
@@ -44,43 +43,18 @@ export default function Board({
             <Piece
               key={piece.id}
               pieceInfo={piece}
-              isWhiteTurn={isWhiteTurn}
-              isBoardFlipped={isBoardFlipped}
               isMovementAllowed={traverseIndex === MOVE_HISTORY.length - 1}
               style={{
                 transform: `translate(${transformXPosition}rem, ${transformYPosition}rem)`,
               }}
-              moveTiles={moveTiles}
-              genMovementTiles={genMovementTiles}
             />
           );
         }
       })}
 
-      {moveTiles.tiles.map((move, index) => {
-        const transformXPosition = move.col * 5.5;
-        const transformYPosition = (7 - move.row) * 5.5;
-
-        return (
-          <div
-            key={index}
-            className="move-tile"
-            style={{
-              top: `${transformYPosition}rem`,
-              left: `${transformXPosition}rem`,
-            }}
-            onClick={() =>
-              handlePieceMovement(moveTiles.id, move.row, move.col)
-            }
-            onDrop={(event) =>
-              handleDrop(event, moveTiles.id, move.row, move.col)
-            }
-            onDragOver={(event) => event.preventDefault()}
-          >
-            <div className="move-tile-indicator"></div>
-          </div>
-        );
-      })}
+      {moveTiles.tiles.map((move, index) => (
+        <MoveTile key={index} move={move} />
+      ))}
     </div>
   );
 }
