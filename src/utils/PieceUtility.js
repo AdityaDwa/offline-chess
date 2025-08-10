@@ -1,5 +1,5 @@
-import { PIECES_INFO } from "./PiecesInfo.js";
-import { pieceIdentifier } from "./MovesValidations.js";
+import { PIECES_INFO } from "../constants/PiecesInfo.js";
+import { pieceIdentifier } from "./MovesValidation.js";
 
 export function computePiecePosition(piece) {
   if (!piece.moveList.length) {
@@ -108,9 +108,7 @@ function isLegalMovePossible(selectedPiece, currentMove, turn) {
   return checkFlagIndicator.length === 0;
 }
 
-export function probeForCheckmate(turn) {
-  const checkMoveArray = probeForCheck(turn);
-
+export function probeForCheckmate(turn, checkMoveArray) {
   if (checkMoveArray.length !== 0) {
     const defendingKing = PIECES_INFO.find(
       (piece) =>

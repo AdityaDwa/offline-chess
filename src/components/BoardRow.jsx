@@ -1,6 +1,8 @@
+import { COLUMNS } from "../constants/MatchConstants.js";
+
 export default function BoardRow({ rowIndex, isBoardFlipped }) {
-  const columnsLetters = ["a", "b", "c", "d", "e", "f", "g", "h"];
   let columnIndex = -1;
+
   return (
     <>
       {Array.from({ length: 8 }).map(() => {
@@ -31,9 +33,7 @@ export default function BoardRow({ rowIndex, isBoardFlipped }) {
               color: colorCondition ? "rgb(217, 230, 245)" : "#18354f",
             }}
           >
-            {rowIndex == 7 - checkingCondition
-              ? columnsLetters[columnIndex]
-              : ""}
+            {rowIndex == 7 - checkingCondition ? COLUMNS[columnIndex] : ""}
           </span>
         );
 
@@ -53,14 +53,3 @@ export default function BoardRow({ rowIndex, isBoardFlipped }) {
     </>
   );
 }
-
-//pawn promotion, notation, movehistory
-//en passant, notation, movehistory
-//endgame resign
-//castling not done
-//checkmate and stalemate not done(pinned pieces)
-//move traverse tile array empty
-
-//clashing move notation fix
-//same name clashing in list too
-//refactor localstorage variable names code optimization

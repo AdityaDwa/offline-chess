@@ -1,15 +1,15 @@
-import blackPawn from "./assets/black_pawn.png";
-import blackRook from "./assets/black_rook.png";
-import blackKnight from "./assets/black_knight.png";
-import blackBishop from "./assets/black_bishop.png";
-import blackQueen from "./assets/black_queen.png";
-import blackKing from "./assets/black_king.png";
-import whitePawn from "./assets/white_pawn.png";
-import whiteRook from "./assets/white_rook.png";
-import whiteKnight from "./assets/white_knight.png";
-import whiteBishop from "./assets/white_bishop.png";
-import whiteQueen from "./assets/white_queen.png";
-import whiteKing from "./assets/white_king.png";
+import blackPawn from "../assets/black_pawn.png";
+import blackRook from "../assets/black_rook.png";
+import blackKnight from "../assets/black_knight.png";
+import blackBishop from "../assets/black_bishop.png";
+import blackQueen from "../assets/black_queen.png";
+import blackKing from "../assets/black_king.png";
+import whitePawn from "../assets/white_pawn.png";
+import whiteRook from "../assets/white_rook.png";
+import whiteKnight from "../assets/white_knight.png";
+import whiteBishop from "../assets/white_bishop.png";
+import whiteQueen from "../assets/white_queen.png";
+import whiteKing from "../assets/white_king.png";
 
 export const DIRECTION_VECTORS = {
   rook: [

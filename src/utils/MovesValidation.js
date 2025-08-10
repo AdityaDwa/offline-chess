@@ -1,4 +1,4 @@
-import { DIRECTION_VECTORS } from "./PiecesInfo.js";
+import { DIRECTION_VECTORS } from "../constants/PiecesInfo.js";
 import { getPieceAtCoords } from "./PieceUtility.js";
 
 export function pieceIdentifier(pieceToIdentify, row, col) {
