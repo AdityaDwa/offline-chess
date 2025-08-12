@@ -159,7 +159,6 @@ export function probeForCheckmate(turn, checkMoveArray) {
               piece.moveList.pop();
               moveset.piece.isCaptured = false;
               if (tempCheckMoveArray.length === 0) {
-                // console.log("capturable");
                 return false;
               }
             }
@@ -197,7 +196,6 @@ export function probeForCheckmate(turn, checkMoveArray) {
                   }
 
                   if (tempCheckMoveArray.length === 0) {
-                    // console.log("blockable by", piece.title, piece.id);
                     return false;
                   }
                 }
